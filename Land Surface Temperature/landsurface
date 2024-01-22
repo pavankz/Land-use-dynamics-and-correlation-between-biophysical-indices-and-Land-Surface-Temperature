@@ -1,0 +1,547 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var aoi = ee.FeatureCollection("users/b171905/Study_Area");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+// Applies scaling factors.
+function applyScaleFactors(image) {
+var opticalBands = image.select('SR_B.').multiply(0.0000275).add(-0.2);
+var thermalBands = image.select('ST_B.*').multiply(0.00341802).add(149.0);
+return image.addBands(opticalBands, null, true)
+          .addBands(thermalBands, null, true);
+}
+///////////////////////1989/////////////////
+var data_1989 = ee.ImageCollection('LANDSAT/LT05/C02/T1_L2')
+.filterDate('1989-05-01', '1989-05-30')
+.filterMetadata('CLOUD_COVER', 'less_than', 10)
+.filterBounds(aoi)
+.map(applyScaleFactors)
+.first();
+print(data_1989);
+///////////////////////1998/////////////////
+var data_1998 = ee.ImageCollection('LANDSAT/LT05/C02/T1_L2')
+.filterDate('1998-05-07', '1998-06-30')
+.filterMetadata('CLOUD_COVER', 'less_than', 10)
+.filterBounds(aoi)
+.map(applyScaleFactors)
+.first();
+print(data_1998);
+///////////////2004////////////////////
+var data_2004 = ee.ImageCollection('LANDSAT/LT05/C02/T1_L2')
+.filterDate('2004-05-01', '2004-05-31')
+.filterMetadata('CLOUD_COVER', 'less_than', 10)
+.filterBounds(aoi)
+.map(applyScaleFactors)
+.first();
+print(data_2004);
+/////////////////////2014///////////////////
+var data_2014 = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2')
+.filterDate('2014-04-20', '2014-06-30')
+.filterMetadata('CLOUD_COVER', 'less_than', 10)
+.filterBounds(aoi)
+.map(applyScaleFactors)
+.first();
+print(data_2014);
+// Filter the collection, first by the aoi, and then by date.
+var data_2022 = ee.ImageCollection('LANDSAT/LC08/C02/T1_L2')
+.filterDate('2022-04-20', '2022-06-30')
+.filterMetadata('CLOUD_COVER', 'less_than', 10)
+.filterBounds(aoi)
+.map(applyScaleFactors)
+.first();
+print(data_2022);
+////////////////////////Cliiping///////////////////////
+var image_1989 = data_1989.clip(aoi);
+var image_1998 = data_1998.clip(aoi);
+var image_2004 = data_2004.clip(aoi);
+var image_2014 = data_2014.clip(aoi);
+var image_2022 = data_2022.clip(aoi);
+////////////////////////////False Color Visualization/////////////////////
+var visualization = {
+bands: ['SR_B4', 'SR_B3', 'SR_B2'],
+min: 0.0,
+max: 0.3,
+};
+var visualization1 = {
+bands: ['SR_B5', 'SR_B4', 'SR_B3'],
+min: 0.0,
+max: 0.3,
+};
+Map.addLayer(image_1989, visualization, 'False Color 1989 (432)', false);
+Map.addLayer(image_1998, visualization, 'False Color 1998 (432)', false);
+Map.addLayer(image_2004, visualization, 'False Color 2004 (432)', false);
+Map.addLayer(image_2014, visualization1, 'False Color 2014 (543)', false);
+Map.addLayer(image_2022, visualization1, 'Flase Color 2022 (543)', false);
+
+////////////////// Normalize Difference Vegetation Index////////////////////////////
+var ndvi_1989  = image_1989.normalizedDifference(['SR_B4', 'SR_B3']).rename('NDVI');
+Map.addLayer(ndvi_1989, {min:-1, max:1, palette: ['red', 'yellow','lime', 'green']}, 'ndvi 1989', false);
+
+var ndvi_1998  = image_1998.normalizedDifference(['SR_B4', 'SR_B3']).rename('NDVI');
+Map.addLayer(ndvi_1998, {min:-1, max:1, palette: ['red', 'yellow','lime', 'green']}, 'ndvi 1998', false);
+
+var ndvi_2004  = image_2004.normalizedDifference(['SR_B4', 'SR_B3']).rename('NDVI');
+Map.addLayer(ndvi_2004, {min:-1, max:1, palette: ['red', 'yellow','lime', 'green']}, 'ndvi 2014', false);
+
+var ndvi_2014  = image_2014.normalizedDifference(['SR_B5', 'SR_B4']).rename('NDVI');
+Map.addLayer(ndvi_2014, {min:-1, max:1, palette: ['red', 'yellow','lime', 'green']}, 'ndvi 2014', false);
+
+var ndvi_2022  = image_2022.normalizedDifference(['SR_B5', 'SR_B4']).rename('NDVI');
+Map.addLayer(ndvi_2022, {min:-1, max:1, palette: ['red', 'yellow','lime', 'green']}, 'ndvi 2022', false);
+
+// ndvi statistics
+/////////////1989/////////////////////
+var ndvi_min_1989 = ee.Number(ndvi_1989.reduceRegion({
+reducer: ee.Reducer.min(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var ndvi_max_1989 = ee.Number(ndvi_1989.reduceRegion({
+reducer: ee.Reducer.max(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+/////////////1998/////////////////////
+var ndvi_min_1998 = ee.Number(ndvi_1998.reduceRegion({
+reducer: ee.Reducer.min(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var ndvi_max_1998 = ee.Number(ndvi_1998.reduceRegion({
+reducer: ee.Reducer.max(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+/////////////2004/////////////////////
+var ndvi_min_2004 = ee.Number(ndvi_2004.reduceRegion({
+reducer: ee.Reducer.min(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var ndvi_max_2004 = ee.Number(ndvi_2004.reduceRegion({
+reducer: ee.Reducer.max(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+/////////////2014/////////////////////
+var ndvi_min_2014 = ee.Number(ndvi_2014.reduceRegion({
+reducer: ee.Reducer.min(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var ndvi_max_2014 = ee.Number(ndvi_2014.reduceRegion({
+reducer: ee.Reducer.max(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+///////////////2022////////////////////////////////
+var ndvi_min_2022 = ee.Number(ndvi_2022.reduceRegion({
+reducer: ee.Reducer.min(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var ndvi_max_2022 = ee.Number(ndvi_2022.reduceRegion({
+reducer: ee.Reducer.max(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+/////////////////////LST Calculation////////////////////////////
+///Visualization///
+var lst_vis = {
+min: 25,
+max: 50,
+palette: [
+'040274', '040281', '0502a3', '0502b8', '0502ce', '0502e6',
+'0602ff', '235cb1', '307ef3', '269db1', '30c8e2', '32d3ef',
+'3be285', '3ff38f', '86e26f', '3ae237', 'b5e22e', 'd6e21f',
+'fff705', 'ffd611', 'ffb613', 'ff8b13', 'ff6e08', 'ff500d',
+'ff0000', 'de0101', 'c21301', 'a71001', '911003']
+};
+var uhi_vis = {
+min: -4,
+max: 4,
+palette:['313695', '74add1', 'fed976', 'feb24c', 'fd8d3c', 'fc4e2a', 'e31a1c',
+'b10026']
+};
+///////////////////////////////1989////////////////
+/// fraction of veg
+var fv_1989 = (ndvi_1989.subtract(ndvi_min_1989).divide(ndvi_max_1989.subtract(ndvi_min_1989))).pow(ee.Number(2))
+      .rename('FV');
+
+var em_1989 = fv_1989.multiply(ee.Number(0.004)).add(ee.Number(0.986)).rename('EM');
+
+var thermal_1989 = image_1989.select('ST_B6').rename('thermal_1989');
+
+var lst_1989 = thermal_1989.expression(
+'(tb / (1 + (0.00115 * (tb/0.48359547432)) * log(em))) - 273.15',
+{'tb':thermal_1989.select('thermal_1989'),
+'em': em_1989}).rename('LST_1989');
+
+Map.addLayer(lst_1989, lst_vis, 'LST 1989');
+Map.centerObject(aoi, 10);
+
+var lst_min_1989 = ee.Number(lst_1989.reduceRegion({
+reducer: ee.Reducer.min(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var lst_max_1989 = ee.Number(lst_1989.reduceRegion({
+reducer: ee.Reducer.max(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var lst_mean_1989 = ee.Number(lst_1989.reduceRegion({
+reducer: ee.Reducer.mean(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var lst_std_1989 = ee.Number(lst_1989.reduceRegion({
+reducer: ee.Reducer.stdDev(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+print('Min LST 1989', lst_min_1989);
+print('Max LST 1989', lst_max_1989);
+print('Mean LST 1989', lst_mean_1989);
+print('STD LST 1989', lst_std_1989);
+
+///////////////////////////////1998////////////////
+/// fraction of veg
+var fv_1998 = (ndvi_1998.subtract(ndvi_min_1998).divide(ndvi_max_1998.subtract(ndvi_min_1998))).pow(ee.Number(2))
+      .rename('FV');
+
+var em_1998 = fv_1998.multiply(ee.Number(0.004)).add(ee.Number(0.986)).rename('EM');
+
+var thermal_1998 = image_1998.select('ST_B6').rename('thermal_1998');
+
+var lst_1998 = thermal_1998.expression(
+'(tb / (1 + (0.00115 * (tb/0.48359547432)) * log(em))) - 273.15',
+{'tb':thermal_1998.select('thermal_1998'),
+'em': em_1998}).rename('LST_1989');
+
+Map.addLayer(lst_1998, lst_vis, 'LST_1998');
+
+var lst_min_1998 = ee.Number(lst_1998.reduceRegion({
+reducer: ee.Reducer.min(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var lst_max_1998 = ee.Number(lst_1998.reduceRegion({
+reducer: ee.Reducer.max(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var lst_mean_1998 = ee.Number(lst_1998.reduceRegion({
+reducer: ee.Reducer.mean(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var lst_std_1998 = ee.Number(lst_1998.reduceRegion({
+reducer: ee.Reducer.stdDev(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+print('Min LST 1998', lst_min_1998);
+print('Max LST 1998', lst_max_1998);
+print('Mean LST 1998', lst_mean_1998);
+print('STD LST 1998', lst_std_1998);
+
+///////////////////////////////2004////////////////
+/// fraction of veg
+var fv_2004 = (ndvi_2004.subtract(ndvi_min_2004).divide(ndvi_max_2004.subtract(ndvi_min_2004))).pow(ee.Number(2))
+      .rename('FV');
+
+var em_2004 = fv_2004.multiply(ee.Number(0.004)).add(ee.Number(0.986)).rename('EM');
+
+var thermal_2004 = image_2004.select('ST_B6').rename('thermal_2004');
+
+var lst_2004 = thermal_2004.expression(
+'(tb / (1 + (0.00115 * (tb/0.48359547432)) * log(em))) - 273.15',
+{'tb':thermal_2004.select('thermal_2004'),
+'em': em_2004}).rename('LST_2004');
+
+Map.addLayer(lst_2004, lst_vis, 'LST_2004');
+
+var lst_min_2004 = ee.Number(lst_2004.reduceRegion({
+reducer: ee.Reducer.min(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var lst_max_2004 = ee.Number(lst_2004.reduceRegion({
+reducer: ee.Reducer.max(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var lst_mean_2004 = ee.Number(lst_2004.reduceRegion({
+reducer: ee.Reducer.mean(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var lst_std_2004 = ee.Number(lst_2004.reduceRegion({
+reducer: ee.Reducer.stdDev(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+print('Min LST 2004', lst_min_2004);
+print('Max LST 2004', lst_max_2004);
+print('Mean LST 2004', lst_mean_2004);
+print('STD LST 2004', lst_std_2004);
+
+///////////////////////////////2014///////////////////
+/// fraction of veg
+var fv_2014 = (ndvi_2014.subtract(ndvi_min_2014).divide(ndvi_max_2014.subtract(ndvi_min_2014))).pow(ee.Number(2))
+      .rename('FV');
+
+
+var em_2014 = fv_2014.multiply(ee.Number(0.004)).add(ee.Number(0.986)).rename('EM');
+
+var thermal_2014 = image_2014.select('ST_B10').rename('thermal_2014');
+
+var lst_2014 = thermal_2014.expression(
+'(tb / (1 + (0.00115 * (tb/0.48359547432)) * log(em))) - 273.15',
+{'tb':thermal_2014.select('thermal_2014'),
+'em': em_2014}).rename('LST_2014');
+
+Map.addLayer(lst_2014, lst_vis, 'LST_2014');
+
+var lst_min_2014 = ee.Number(lst_2014.reduceRegion({
+reducer: ee.Reducer.min(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var lst_max_2014 = ee.Number(lst_2014.reduceRegion({
+reducer: ee.Reducer.max(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var lst_mean_2014 = ee.Number(lst_2014.reduceRegion({
+reducer: ee.Reducer.mean(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var lst_std_2014 = ee.Number(lst_2014.reduceRegion({
+reducer: ee.Reducer.stdDev(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+print('Min LST 2014', lst_min_2014);
+print('Max LST 2014', lst_max_2014);
+print('Mean LST 2014', lst_mean_2014);
+print('STD LST 2014', lst_std_2014);
+
+///////////////////////2022///////////////////////////////
+// fraction of veg
+var fv_2022 = (ndvi_2022.subtract(ndvi_min_2022).divide(ndvi_max_2022.subtract(ndvi_min_2022))).pow(ee.Number(2))
+      .rename('FV');
+
+
+var em_2022 = fv_2022.multiply(ee.Number(0.004)).add(ee.Number(0.986)).rename('EM');
+
+var thermal_2022 = image_2022.select('ST_B10').rename('thermal_2022');
+
+var lst_2022 = thermal_2022.expression(
+'(tb / (1 + (0.00115 * (tb/0.48359547432)) * log(em))) - 273.15',
+{'tb':thermal_2022.select('thermal_2022'),
+'em': em_2022}).rename('LST_2022');
+
+Map.addLayer(lst_2022, lst_vis, 'LST 2022');
+
+var lst_min_2022 = ee.Number(lst_2022.reduceRegion({
+reducer: ee.Reducer.min(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var lst_max_2022 = ee.Number(lst_2022.reduceRegion({
+reducer: ee.Reducer.max(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var lst_mean_2022 = ee.Number(lst_2022.reduceRegion({
+reducer: ee.Reducer.mean(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+var lst_std_2022 = ee.Number(lst_2022.reduceRegion({
+reducer: ee.Reducer.stdDev(),
+geometry: aoi,
+scale: 30,
+maxPixels: 1e12
+}).values().get(0));
+
+print('Min LST 2022', lst_min_2022);
+print('Max LST 2022', lst_max_2022);
+print('Mean LST 2022', lst_mean_2022);
+print('STD LST 2022', lst_std_2022);
+
+///////////////////UHI Calculation//////////////////////////////
+//1989
+var uhi_1989 = lst_1989.subtract(lst_mean_1989).divide(lst_std_1989).rename('UHI');
+Map.addLayer(uhi_1989, uhi_vis, 'UHI_1989');
+//1998
+var uhi_1998 = lst_1998.subtract(lst_mean_1998).divide(lst_std_1998).rename('UHI');
+Map.addLayer(uhi_1998, uhi_vis, 'UHI_1998');
+//2004
+var uhi_2004 = lst_2004.subtract(lst_mean_2004).divide(lst_std_2004).rename('UHI');
+Map.addLayer(uhi_2004, uhi_vis, 'UHI_2004');
+//2014
+var uhi_2014 = lst_2014.subtract(lst_mean_2014).divide(lst_std_2014).rename('UHI');
+Map.addLayer(uhi_2014, uhi_vis, 'UHI_2014');
+//2022
+var uhi_2022 = lst_2022.subtract(lst_mean_2022).divide(lst_std_2022).rename('UHI');
+Map.addLayer(uhi_2022, uhi_vis, 'UHI_2022');
+
+//////////////////Export Images//////////////////////////////
+////Exporting LST 
+Export.image.toDrive({
+  description: 'LST1989',
+  image: lst_1989,
+  folder: 'New_LST',
+  scale: 30,
+  region: aoi,
+   crs: 'EPSG:32644',
+  maxPixels: 1e12,
+  fileFormat: 'GeoTIFF'
+});
+Export.image.toDrive({
+  description: 'LST1998',
+  image: lst_1998,
+  folder: 'New_LST',
+  scale: 30,
+  region: aoi,
+   crs: 'EPSG:32644',
+  maxPixels: 1e12,
+  fileFormat: 'GeoTIFF'
+});
+Export.image.toDrive({
+  description: 'LST2004',
+  image: lst_2004,
+  folder: 'New_LST',
+  scale: 30,
+  region: aoi,
+   crs: 'EPSG:32644',
+  maxPixels: 1e12,
+  fileFormat: 'GeoTIFF'
+});
+Export.image.toDrive({
+  description: 'LST2014',
+  image: lst_2014,
+  folder: 'New_LST',
+  scale: 30,
+  region: aoi,
+   crs: 'EPSG:32644',
+  maxPixels: 1e12,
+  fileFormat: 'GeoTIFF'
+});
+Export.image.toDrive({
+  description: 'LST2022',
+  image: lst_2022,
+  folder: 'New_LST',
+  scale: 30,
+  region: aoi,
+   crs: 'EPSG:32644',
+  maxPixels: 1e12,
+  fileFormat: 'GeoTIFF'
+});
+/////Exporting Urban Heat Island
+Export.image.toDrive({
+  description: 'UHI1989',
+  image: uhi_1989,
+  folder: 'New_UHI',
+  scale: 30,
+  region: aoi,
+  crs: 'EPSG:32644',
+  maxPixels: 1e12,
+  fileFormat: 'GeoTIFF'
+});
+Export.image.toDrive({
+  description: 'UHI1998',
+  image: uhi_1998,
+  folder: 'New_UHI',
+  scale: 30,
+  region: aoi,
+  crs: 'EPSG:32644',
+  maxPixels: 1e12,
+  fileFormat: 'GeoTIFF'
+});
+Export.image.toDrive({
+  description: 'UHI2004',
+  image: uhi_2004,
+  folder: 'New_UHI',
+  scale: 30,
+  region: aoi,
+  crs: 'EPSG:32644',
+  maxPixels: 1e12,
+  fileFormat: 'GeoTIFF'
+});
+Export.image.toDrive({
+  description: 'UHI2014',
+  image: uhi_2014,
+  folder: 'New_UHI',
+  scale: 30,
+  region: aoi,
+  crs: 'EPSG:32644',
+  maxPixels: 1e12,
+  fileFormat: 'GeoTIFF'
+});
+Export.image.toDrive({
+  description: 'UHI2022',
+  image: uhi_2022,
+  folder: 'New_UHI',
+  scale: 30,
+  region: aoi,
+  crs: 'EPSG:32644',
+  maxPixels: 1e12,
+  fileFormat: 'GeoTIFF'
+});
+
