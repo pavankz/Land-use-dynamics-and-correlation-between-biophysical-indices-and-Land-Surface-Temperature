@@ -1,0 +1,91 @@
+/**** Start of imports. If edited, may not auto-convert in the playground. ****/
+var aoi = ee.FeatureCollection("users/b171905/Study_Area");
+/***** End of imports. If edited, may not auto-convert in the playground. *****/
+// Applies scaling factors.
+function applyScaleFactors(image) {
+  var opticalBands = image.select('SR_B.').multiply(0.0000275).add(-0.2);
+  var thermalBands = image.select('ST_B.*').multiply(0.00341802).add(149.0);
+  return image.addBands(opticalBands, null, true)
+              .addBands(thermalBands, null, true);
+}
+
+
+var dataset = ee.ImageCollection('LANDSAT/LC09/C02/T1_L2')
+    .filterDate('2022-01-01', '2022-12-01')
+    .filterMetadata('CLOUD_COVER', 'less_than', 10)
+    .filterBounds(aoi)
+    .map(applyScaleFactors)
+    .first();
+print(dataset);
+var image = dataset.clip(aoi);
+//Map.addLayer(dataset, {bands:['SR_B4', 'SR_B3','SR_B2'], min:0.03, max:0.3}, 'TRUE');
+//Map.addLayer(image, {bands:['SR_B5', 'SR_B4','SR_B3'], min:0.03, max:0.3}, 'FCC');
+
+ //////////////////////NDVI/////////////////////////////////
+ 
+ var nir = image.select('SR_B5');
+ var red = image.select('SR_B4');
+ 
+ var ndvi = nir.subtract(red).divide(nir.add(red)).rename('ndvi')
+ 
+ Map.addLayer(ndvi, {palette:['ff0101','f5ff00','00ff00','008c16'], min:-1, max:1}, 'NDVI');
+ Map.centerObject(aoi, 11);
+ 
+ ///////////////////////////////NDVI values into Clsses/////////////////////////////
+ var threshold = ee.Image([-0.04, 0, 0.1, 0.2, 0.3, 0.4, 0.7]);
+ var classified = ndvi.gt(threshold).reduce('sum').toInt();
+ print(classified, 'Classified');
+ 
+var classifiedParams = {min: 0, max:7, palette: ['blue', 'white', 'red', 'burlywood', 'LimeGreen', 'ForestGreen', 'DarkGreen',]};
+Map.addLayer(classified.clip(aoi), classifiedParams, 'Classified');
+
+////////Counting number of Pixels///////////////
+var allPix = classified.updateMask(classified);
+var pixStats = allPix.reduceRegion({
+  reducer: ee.Reducer.count(),
+  geometry: aoi,
+  scale: 30,
+  maxPixels:1e12
+});
+var allpixels = ee.Number(pixStats.get('sum'));
+
+///////////////Create a empty list//////////////////////
+
+var areaList = [];
+
+///////Create a function to derive the extent of one NDVI class///////////////
+var areacount = function(cnr, name){
+  var singleMask = classified.updateMask(classified.eq(cnr));
+  var stats = singleMask.reduceRegion({
+    reducer: ee.Reducer.count(), ///count pixels in a single cell
+    geometry:aoi,
+    scale:30,
+    maxPixels: 1e12
+  });
+var pix = ee.Number(stats.get('sum'));
+var hect = pix.multiply(900).divide(10000);
+var sqkm = pix.multiply(900).divide(1000000);
+var perc = pix.divide(allpixels).multiply(10000).round().divide(100);
+areaList.push({Class:name, Pixels: pix, Hectares:hect, SquareKilometers: sqkm, Percentage:perc})
+}
+
+/////create a list that contains NDVI class values//////////////
+var names2 = ['Water', 'No Vegetation', 'Very Low Vegetation', 'Low Vegetation', 'Moderate Vegetation','Moderate-High-Vegetation','High Vegetation'];
+for (var i=0; i<7; i++){
+  areacount(i, names2[i]);
+  }
+
+print('Vegetated Area by NDVI Class', areaList);
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
