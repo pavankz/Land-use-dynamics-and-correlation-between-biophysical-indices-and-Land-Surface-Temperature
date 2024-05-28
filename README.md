@@ -1,5 +1,5 @@
 
-# Land use dynamics and correlation between biophysical indices and LST in Greater                    Hyderabad Municipal Corporation.
+# Land use dynamics and correlation between biophysical indices and Land Surface Temperature in Greater Hyderabad Municipal Corporation (GHMC), Telangana
 
 **Objectives:** 
 1. Temporal LU change analysis (during 1988 to 2022)
